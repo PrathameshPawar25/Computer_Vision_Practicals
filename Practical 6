@@ -1,0 +1,40 @@
+import torch import torchvision
+from torchvision.models.detection import fasterrcnn_resnet50_fpn from torchvision.transforms import functional as F
+from PIL import Image import matplotlib.pyplot as plt
+import matplotlib.patches as patches from google.colab import files
+uploaded = files.upload() image_path = next(iter(uploaded))
+img = Image.open(image_path).convert("RGB")
+model = fasterrcnn_resnet50_fpn(pretrained=True) model.eval()
+img_tensor = F.to_tensor(img) with torch.no_grad():
+predictions = model([img_tensor])
+def plot_results(img, predictions, threshold=0.5): plt.figure(figsize=(12,8))
+plt.imshow(img) ax = plt.gca()
+COCO_INSTANCE_CATEGORY_NAMES = [
+' background ', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A', 'stop
+sign',
+'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
+'elephant', 'bear', 'zebra', 'giraffe', 'N/A', 'backpack', 'umbrella',
+'N/A', 'N/A', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard',
+'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'N/A', 'wine glass', 'cup',
+'fork',
+'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli',
+'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+'potted plant', 'bed', 'N/A', 'dining table', 'N/A', 'N/A', 'toilet',
+'N/A', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone',
+'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'N/A', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
+]
+boxes = predictions[0]['boxes'] labels = predictions[0]['labels'] scores = predictions[0]['scores']
+for box, label, score in zip(boxes, labels, scores): if score >= threshold:
+xmin, ymin, xmax, ymax = box
+rect = patches.Rectangle((xmin, ymin), xmax - xmin, ymax
+- ymin,
+linewidth=2, edgecolor='r',
+facecolor='none')
+ax.add_patch(rect) ax.text(xmin, ymin,
+f"{COCO_INSTANCE_CATEGORY_NAMES[label]}:
+{score:.2f}",
+bbox=dict(facecolor='yellow', alpha=0.5)) plt.axis('off')
+plt.show()
+# Plot results on your uploaded image plot_results(img, predictions)
+
